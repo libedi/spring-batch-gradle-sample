@@ -1,0 +1,22 @@
+spring:
+  batch:
+    job:
+      enabled: false
+
+app:
+  batch:
+    chunk-size: 2
+    page-size: 2
+  datasource:
+    batch:
+      driver-class-name: org.h2.Driver
+      jdbc-url: jdbc:h2:mem:batchdb-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      username: sa
+    bill:
+      driver-class-name: org.h2.Driver
+      jdbc-url: jdbc:h2:mem:billdb-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      username: sa
+    customer:
+      driver-class-name: org.h2.Driver
+      jdbc-url: jdbc:h2:mem:customerdb-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      username: sa
