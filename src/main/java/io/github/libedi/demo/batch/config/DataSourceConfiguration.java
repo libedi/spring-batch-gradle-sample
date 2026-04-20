@@ -13,16 +13,16 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * Declares multi-datasource and transaction manager beans.
+ * 멀티 데이터소스와 트랜잭션 매니저 빈을 선언합니다.
  */
 @Configuration
 @EnableConfigurationProperties(AppBatchProperties.class)
 public class DataSourceConfiguration {
 
     /**
-     * Creates the primary datasource used by Spring Batch metadata.
+     * Spring Batch 메타데이터용 기본 데이터소스를 생성합니다.
      *
-     * @return primary batch datasource
+     * @return 기본 배치 데이터소스
      */
     @Bean(name = "batchDataSource")
     @Primary
@@ -32,9 +32,9 @@ public class DataSourceConfiguration {
     }
 
     /**
-     * Creates the datasource for bill domain read/write operations.
+     * bill 도메인 조회/저장용 데이터소스를 생성합니다.
      *
-     * @return bill datasource
+     * @return bill 데이터소스
      */
     @Bean(name = "billDataSource")
     @ConfigurationProperties(prefix = "app.datasource.bill")
@@ -43,9 +43,9 @@ public class DataSourceConfiguration {
     }
 
     /**
-     * Creates the datasource for customer domain read operations.
+     * customer 도메인 조회용 데이터소스를 생성합니다.
      *
-     * @return customer datasource
+     * @return customer 데이터소스
      */
     @Bean(name = "customerDataSource")
     @ConfigurationProperties(prefix = "app.datasource.customer")
@@ -54,10 +54,10 @@ public class DataSourceConfiguration {
     }
 
     /**
-     * Creates the transaction manager bound to the primary batch datasource.
+     * 기본 배치 데이터소스에 연결된 트랜잭션 매니저를 생성합니다.
      *
-     * @param dataSource primary batch datasource
-     * @return transaction manager for batch metadata
+     * @param dataSource 기본 배치 데이터소스
+     * @return 배치 메타데이터용 트랜잭션 매니저
      */
     @Bean(name = "batchTransactionManager")
     @Primary
@@ -68,10 +68,10 @@ public class DataSourceConfiguration {
     }
 
     /**
-     * Creates the transaction manager for bill datasource writes.
+     * bill 데이터소스 쓰기용 트랜잭션 매니저를 생성합니다.
      *
-     * @param dataSource bill datasource
-     * @return transaction manager for bill domain
+     * @param dataSource bill 데이터소스
+     * @return bill 도메인 트랜잭션 매니저
      */
     @Bean(name = "billTransactionManager")
     public PlatformTransactionManager billTransactionManager(
@@ -81,10 +81,10 @@ public class DataSourceConfiguration {
     }
 
     /**
-     * Creates the transaction manager for customer datasource reads.
+     * customer 데이터소스 조회용 트랜잭션 매니저를 생성합니다.
      *
-     * @param dataSource customer datasource
-     * @return transaction manager for customer domain
+     * @param dataSource customer 데이터소스
+     * @return customer 도메인 트랜잭션 매니저
      */
     @Bean(name = "customerTransactionManager")
     public PlatformTransactionManager customerTransactionManager(
@@ -93,3 +93,5 @@ public class DataSourceConfiguration {
         return new DataSourceTransactionManager(dataSource);
     }
 }
+
+

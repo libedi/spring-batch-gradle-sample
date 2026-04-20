@@ -24,7 +24,7 @@ import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlGroup;
 
 /**
- * Integration tests for step-slice and full job execution paths.
+ * Step 슬라이스와 전체 Job 실행 경로를 검증하는 통합 테스트입니다.
  */
 @SpringBootTest(properties = "spring.batch.job.enabled=false")
 @ActiveProfiles("test")
@@ -66,9 +66,9 @@ class BillingNdjsonJobIntegrationTest {
     private BillDataMapper billDataMapper;
 
     /**
-     * Verifies step-slice execution processes joinable rows only.
+     * Step 슬라이스 실행이 조인 가능한 데이터만 처리하는지 검증합니다.
      *
-     * @throws Exception when job execution fails
+     * @throws Exception Job 실행 실패 시
      */
     @Test
     void billingNdjsonStepProcessesJoinableRows() throws Exception {
@@ -80,9 +80,9 @@ class BillingNdjsonJobIntegrationTest {
     }
 
     /**
-     * Verifies full job execution writes expected NDJSON content.
+     * 전체 Job 실행이 기대한 NDJSON 데이터를 기록하는지 검증합니다.
      *
-     * @throws Exception when job execution fails
+     * @throws Exception Job 실행 실패 시
      */
     @Test
     void billingNdjsonJobCompletesAndWritesNdjson() throws Exception {
@@ -98,17 +98,17 @@ class BillingNdjsonJobIntegrationTest {
     }
 
     /**
-     * Test-only job configuration for running a single step as a standalone job.
+     * 단일 Step을 독립 Job으로 실행하기 위한 테스트 전용 설정입니다.
      */
     @TestConfiguration
     static class StepSliceTestConfiguration {
 
         /**
-         * Wraps production step into a single-step job for slice testing.
+         * 운영 Step을 단일 Step Job으로 감싸 슬라이스 테스트를 수행합니다.
          *
-         * @param jobRepository job repository
-         * @param billingNdjsonStep production step bean
-         * @return single-step test job
+         * @param jobRepository Job 저장소
+         * @param billingNdjsonStep 운영 Step 빈
+         * @return 단일 Step 테스트 Job
          */
         @Bean(name = "billingNdjsonStepSliceJob")
         Job billingNdjsonStepSliceJob(
@@ -122,9 +122,9 @@ class BillingNdjsonJobIntegrationTest {
     }
 
     /**
-     * Creates unique parameters for test job execution.
+     * 테스트 Job 실행용 고유 파라미터를 생성합니다.
      *
-     * @return job parameters with unique timestamp
+     * @return 고유 타임스탬프를 포함한 Job 파라미터
      */
     private org.springframework.batch.core.job.parameters.JobParameters testJobParameters() {
         return new JobParametersBuilder()
@@ -132,3 +132,5 @@ class BillingNdjsonJobIntegrationTest {
                 .toJobParameters();
     }
 }
+
+

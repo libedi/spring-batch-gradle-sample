@@ -1,11 +1,11 @@
 package io.github.libedi.demo.batch.domain;
 
 /**
- * Customer snapshot joined by billing ID.
+ * 청구 ID로 조인된 고객 스냅샷입니다.
  *
- * @param billingId billing identifier
- * @param customerName customer display name
- * @param email customer email
+ * @param billingId 청구 식별자
+ * @param customerName 고객 표시 이름
+ * @param email 고객 이메일
  */
 public record CustomerInfo(
         long billingId,
@@ -13,3 +13,5 @@ public record CustomerInfo(
         String email
 ) {
 }
+
+

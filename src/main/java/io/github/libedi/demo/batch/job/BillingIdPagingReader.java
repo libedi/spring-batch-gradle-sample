@@ -8,7 +8,7 @@ import org.springframework.batch.infrastructure.item.ExecutionContext;
 import org.springframework.batch.infrastructure.item.ItemStreamReader;
 
 /**
- * Item reader that pages billing IDs from the bill datasource.
+ * bill 데이터소스에서 청구 ID를 페이지 단위로 읽는 ItemReader입니다.
  */
 public class BillingIdPagingReader implements ItemStreamReader<Long> {
 
@@ -21,10 +21,10 @@ public class BillingIdPagingReader implements ItemStreamReader<Long> {
     private long lastId;
 
     /**
-     * Constructs paging reader with mapper and page size.
+     * 매퍼와 페이지 크기로 페이징 리더를 생성합니다.
      *
-     * @param billingMapper mapper for billing target IDs
-     * @param pageSize page size for each fetch
+     * @param billingMapper 청구 대상 ID 조회 매퍼
+     * @param pageSize 조회당 페이지 크기
      */
     public BillingIdPagingReader(BillingMapper billingMapper, int pageSize) {
         this.billingMapper = billingMapper;
@@ -32,9 +32,9 @@ public class BillingIdPagingReader implements ItemStreamReader<Long> {
     }
 
     /**
-     * Reads one billing ID and loads the next page when buffer is empty.
+     * 청구 ID 1건을 읽고 버퍼가 비면 다음 페이지를 로드합니다.
      *
-     * @return next billing ID or {@code null} when no target remains
+     * @return 다음 청구 ID, 더 이상 대상이 없으면 {@code null}
      */
     @Override
     public Long read() {
@@ -50,9 +50,9 @@ public class BillingIdPagingReader implements ItemStreamReader<Long> {
     }
 
     /**
-     * Restores reader state from execution context.
+     * 실행 컨텍스트에서 리더 상태를 복원합니다.
      *
-     * @param executionContext step execution context
+     * @param executionContext Step 실행 컨텍스트
      */
     @Override
     public void open(ExecutionContext executionContext) {
@@ -60,9 +60,9 @@ public class BillingIdPagingReader implements ItemStreamReader<Long> {
     }
 
     /**
-     * Persists reader state into execution context.
+     * 리더 상태를 실행 컨텍스트에 저장합니다.
      *
-     * @param executionContext step execution context
+     * @param executionContext Step 실행 컨텍스트
      */
     @Override
     public void update(ExecutionContext executionContext) {
@@ -70,10 +70,12 @@ public class BillingIdPagingReader implements ItemStreamReader<Long> {
     }
 
     /**
-     * Clears in-memory buffer on stream close.
+     * 스트림 종료 시 메모리 버퍼를 비웁니다.
      */
     @Override
     public void close() {
         buffer.clear();
     }
 }
+
+

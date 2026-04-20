@@ -8,16 +8,16 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 /**
- * Mapper for billing domain read/update operations.
+ * billing 도메인 조회/수정용 매퍼입니다.
  */
 public interface BillingMapper {
 
     /**
-     * Finds next page of unprocessed billing IDs after given last ID.
+     * 마지막 ID 이후 미처리 청구 ID 페이지를 조회합니다.
      *
-     * @param lastId last processed billing ID
-     * @param pageSize max rows to fetch
-     * @return target billing IDs
+     * @param lastId 마지막 처리 청구 ID
+     * @param pageSize 조회할 최대 행 수
+     * @return 대상 청구 ID 목록
      */
     @Select("""
             SELECT id
@@ -30,10 +30,10 @@ public interface BillingMapper {
     List<Long> findTargetBillingIds(@Param("lastId") long lastId, @Param("pageSize") int pageSize);
 
     /**
-     * Finds billing header by billing ID.
+     * 청구 ID로 billing 헤더를 조회합니다.
      *
-     * @param billingId billing identifier
-     * @return billing header row
+     * @param billingId 청구 식별자
+     * @return billing 헤더 행
      */
     @Select("""
             SELECT id, billing_no
@@ -43,10 +43,10 @@ public interface BillingMapper {
     BillingHeader findBillingHeader(@Param("billingId") long billingId);
 
     /**
-     * Finds billing detail by billing ID.
+     * 청구 ID로 billing 상세를 조회합니다.
      *
-     * @param billingId billing identifier
-     * @return billing detail row
+     * @param billingId 청구 식별자
+     * @return billing 상세 행
      */
     @Select("""
             SELECT billing_id, amount, due_date
@@ -56,10 +56,10 @@ public interface BillingMapper {
     BillingDetail findBillingDetail(@Param("billingId") long billingId);
 
     /**
-     * Marks billing rows as processed.
+     * billing 행을 처리 완료 상태로 변경합니다.
      *
-     * @param billingIds billing identifiers to update
-     * @return affected row count
+     * @param billingIds 업데이트할 청구 식별자 목록
+     * @return 영향받은 행 수
      */
     @Update("""
             <script>
@@ -74,10 +74,12 @@ public interface BillingMapper {
     int markProcessed(@Param("billingIds") List<Long> billingIds);
 
     /**
-     * Counts processed billing rows.
+     * 처리 완료된 billing 행 수를 조회합니다.
      *
-     * @return processed row count
+     * @return 처리 완료 행 수
      */
     @Select("SELECT COUNT(*) FROM billing WHERE processed = TRUE")
     long countProcessed();
 }
+
+

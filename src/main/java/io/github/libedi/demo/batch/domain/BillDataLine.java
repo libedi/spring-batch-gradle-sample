@@ -1,13 +1,15 @@
 package io.github.libedi.demo.batch.domain;
 
 /**
- * NDJSON output line persisted in {@code bill_data}.
+ * {@code bill_data}에 저장되는 NDJSON 출력 라인입니다.
  *
- * @param billingId billing identifier
- * @param payloadNdjson ndjson payload text
+ * @param billingId 청구 식별자
+ * @param payloadNdjson NDJSON 페이로드 문자열
  */
 public record BillDataLine(
         long billingId,
         String payloadNdjson
 ) {
 }
+
+

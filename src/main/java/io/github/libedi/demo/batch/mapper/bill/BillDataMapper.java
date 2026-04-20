@@ -7,15 +7,15 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 /**
- * Mapper for {@code bill_data} write/read operations.
+ * {@code bill_data} 조회/저장용 매퍼입니다.
  */
 public interface BillDataMapper {
 
     /**
-     * Inserts generated NDJSON lines in batch.
+     * 생성된 NDJSON 라인을 배치로 저장합니다.
      *
-     * @param items bill data lines to insert
-     * @return affected row count
+     * @param items 저장할 청구 데이터 라인 목록
+     * @return 영향받은 행 수
      */
     @Insert("""
             <script>
@@ -29,19 +29,21 @@ public interface BillDataMapper {
     int insertBatch(@Param("items") List<BillDataLine> items);
 
     /**
-     * Counts rows in {@code bill_data}.
+     * {@code bill_data} 행 수를 조회합니다.
      *
-     * @return row count
+     * @return 행 수
      */
     @Select("SELECT COUNT(*) FROM bill_data")
     long countBillData();
 
     /**
-     * Finds NDJSON payload by billing ID.
+     * 청구 ID로 NDJSON 페이로드를 조회합니다.
      *
-     * @param billingId billing identifier
-     * @return NDJSON payload
+     * @param billingId 청구 식별자
+     * @return NDJSON 페이로드
      */
     @Select("SELECT payload_ndjson FROM bill_data WHERE billing_id = #{billingId}")
     String findPayloadByBillingId(@Param("billingId") long billingId);
 }
+
+

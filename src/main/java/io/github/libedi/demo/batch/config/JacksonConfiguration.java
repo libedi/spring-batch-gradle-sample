@@ -6,15 +6,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Declares Jackson related beans used by batch components.
+ * 배치 컴포넌트에서 사용하는 Jackson 빈을 선언합니다.
  */
 @Configuration
 public class JacksonConfiguration {
 
     /**
-     * Creates an {@link ObjectMapper} bean for NDJSON serialization.
+     * NDJSON 직렬화를 위한 {@link ObjectMapper} 빈을 생성합니다.
      *
-     * @return shared ObjectMapper
+     * @return 공용 ObjectMapper
      */
     @Bean
     public ObjectMapper objectMapper() {
@@ -23,3 +23,5 @@ public class JacksonConfiguration {
                 .build();
     }
 }
+
+

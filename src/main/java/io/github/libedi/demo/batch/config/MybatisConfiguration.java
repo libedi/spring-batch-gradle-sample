@@ -10,17 +10,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Declares MyBatis factories/templates for bill and customer datasources.
+ * bill/customer 데이터소스용 MyBatis 팩토리와 템플릿을 선언합니다.
  */
 @Configuration
 public class MybatisConfiguration {
 
     /**
-     * Creates a MyBatis {@link SqlSessionFactory} for the given datasource.
+     * 지정한 데이터소스용 MyBatis {@link SqlSessionFactory}를 생성합니다.
      *
-     * @param dataSource target datasource
-     * @return configured SqlSessionFactory
-     * @throws Exception when factory initialization fails
+     * @param dataSource 대상 데이터소스
+     * @return 구성된 SqlSessionFactory
+     * @throws Exception 팩토리 초기화 실패 시
      */
     private static SqlSessionFactory createSqlSessionFactory(DataSource dataSource) throws Exception {
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
@@ -34,7 +34,7 @@ public class MybatisConfiguration {
     }
 
     /**
-     * Bill domain MyBatis configuration.
+     * bill 도메인 MyBatis 설정입니다.
      */
     @Configuration
     @MapperScan(
@@ -44,11 +44,11 @@ public class MybatisConfiguration {
     public static class BillConfiguration {
 
         /**
-         * Creates bill domain SqlSessionFactory.
+         * bill 도메인 SqlSessionFactory를 생성합니다.
          *
-         * @param dataSource bill datasource
+         * @param dataSource bill 데이터소스
          * @return bill SqlSessionFactory
-         * @throws Exception when factory initialization fails
+         * @throws Exception 팩토리 초기화 실패 시
          */
         @Bean(name = "billSqlSessionFactory")
         public SqlSessionFactory billSqlSessionFactory(
@@ -58,7 +58,7 @@ public class MybatisConfiguration {
         }
 
         /**
-         * Creates bill domain SqlSessionTemplate.
+         * bill 도메인 SqlSessionTemplate를 생성합니다.
          *
          * @param sqlSessionFactory bill SqlSessionFactory
          * @return bill SqlSessionTemplate
@@ -72,7 +72,7 @@ public class MybatisConfiguration {
     }
 
     /**
-     * Customer domain MyBatis configuration.
+     * customer 도메인 MyBatis 설정입니다.
      */
     @Configuration
     @MapperScan(
@@ -82,11 +82,11 @@ public class MybatisConfiguration {
     public static class CustomerConfiguration {
 
         /**
-         * Creates customer domain SqlSessionFactory.
+         * customer 도메인 SqlSessionFactory를 생성합니다.
          *
-         * @param dataSource customer datasource
+         * @param dataSource customer 데이터소스
          * @return customer SqlSessionFactory
-         * @throws Exception when factory initialization fails
+         * @throws Exception 팩토리 초기화 실패 시
          */
         @Bean(name = "customerSqlSessionFactory")
         public SqlSessionFactory customerSqlSessionFactory(
@@ -96,7 +96,7 @@ public class MybatisConfiguration {
         }
 
         /**
-         * Creates customer domain SqlSessionTemplate.
+         * customer 도메인 SqlSessionTemplate를 생성합니다.
          *
          * @param sqlSessionFactory customer SqlSessionFactory
          * @return customer SqlSessionTemplate
@@ -109,3 +109,5 @@ public class MybatisConfiguration {
         }
     }
 }
+
+

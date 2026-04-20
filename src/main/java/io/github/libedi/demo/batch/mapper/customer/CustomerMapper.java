@@ -5,15 +5,15 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 /**
- * Mapper for customer domain read operations.
+ * customer 도메인 조회용 매퍼입니다.
  */
 public interface CustomerMapper {
 
     /**
-     * Finds customer info by billing ID.
+     * 청구 ID로 고객 정보를 조회합니다.
      *
-     * @param billingId billing identifier
-     * @return customer info row
+     * @param billingId 청구 식별자
+     * @return 고객 정보 행
      */
     @Select("""
             SELECT billing_id, customer_name, email
@@ -22,3 +22,5 @@ public interface CustomerMapper {
             """)
     CustomerInfo findCustomer(@Param("billingId") long billingId);
 }
+
+

@@ -28,17 +28,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * Declares job/step/reader/processor/writer beans for NDJSON billing export.
+ * NDJSON 청구 내보내기용 Job/Step/Reader/Processor/Writer 빈을 선언합니다.
  */
 @Configuration
 public class BillingNdjsonJobConfiguration {
 
     /**
-     * Creates the NDJSON billing job.
+     * NDJSON 청구 Job을 생성합니다.
      *
-     * @param jobRepository batch job repository
-     * @param billingNdjsonStep processing step
-     * @return job definition
+     * @param jobRepository 배치 Job 저장소
+     * @param billingNdjsonStep 처리 Step
+     * @return Job 정의
      */
     @Bean
     public Job billingNdjsonJob(JobRepository jobRepository, Step billingNdjsonStep) {
@@ -48,15 +48,15 @@ public class BillingNdjsonJobConfiguration {
     }
 
     /**
-     * Creates the chunk-oriented step for billing NDJSON generation.
+     * billing NDJSON 생성을 위한 청크 기반 Step을 생성합니다.
      *
-     * @param jobRepository batch job repository
-     * @param billTransactionManager transaction manager for bill datasource
-     * @param billingIdPagingReader billing ID reader
-     * @param billingLineProcessor item processor that joins bill/customer data
-     * @param billDataWriter item writer that stores NDJSON
-     * @param appBatchProperties batch runtime properties
-     * @return step definition
+     * @param jobRepository 배치 Job 저장소
+     * @param billTransactionManager bill 데이터소스 트랜잭션 매니저
+     * @param billingIdPagingReader 청구 ID 리더
+     * @param billingLineProcessor bill/customer 데이터를 조인하는 ItemProcessor
+     * @param billDataWriter NDJSON를 저장하는 ItemWriter
+     * @param appBatchProperties 배치 실행 속성
+     * @return Step 정의
      */
     @Bean
     public Step billingNdjsonStep(
@@ -77,11 +77,11 @@ public class BillingNdjsonJobConfiguration {
     }
 
     /**
-     * Creates paging reader for target billing IDs.
+     * 대상 청구 ID용 페이징 리더를 생성합니다.
      *
-     * @param billingMapper bill mapper
-     * @param appBatchProperties batch runtime properties
-     * @return paging reader
+     * @param billingMapper bill 매퍼
+     * @param appBatchProperties 배치 실행 속성
+     * @return 페이징 리더
      */
     @Bean
     public BillingIdPagingReader billingIdPagingReader(
@@ -92,11 +92,11 @@ public class BillingNdjsonJobConfiguration {
     }
 
     /**
-     * Creates processor that joins bill detail and customer rows into NDJSON line data.
+     * bill 상세와 customer 행을 조인해 NDJSON 라인 데이터를 만드는 Processor를 생성합니다.
      *
-     * @param billingMapper bill mapper
-     * @param customerMapper customer mapper
-     * @return item processor
+     * @param billingMapper bill 매퍼
+     * @param customerMapper customer 매퍼
+     * @return ItemProcessor
      */
     @Bean
     public ItemProcessor<Long, BillDataLine> billingLineProcessor(
@@ -126,11 +126,11 @@ public class BillingNdjsonJobConfiguration {
     }
 
     /**
-     * Creates writer that stores NDJSON and marks processed billing rows.
+     * NDJSON 저장과 billing 처리 상태 갱신을 수행하는 Writer를 생성합니다.
      *
-     * @param billDataMapper mapper for output table writes
-     * @param billingMapper mapper for processed flag updates
-     * @return item writer
+     * @param billDataMapper 출력 테이블 저장 매퍼
+     * @param billingMapper 처리 플래그 갱신 매퍼
+     * @return ItemWriter
      */
     @Bean
     public ItemWriter<BillDataLine> billDataWriter(
@@ -149,11 +149,11 @@ public class BillingNdjsonJobConfiguration {
     }
 
     /**
-     * Converts ordered payload entries into a single NDJSON line.
+     * 정렬된 payload 항목을 단일 NDJSON 라인으로 변환합니다.
      *
-     * @param payload ordered payload fields
-     * @param objectMapper jackson object mapper
-     * @return one JSON line with trailing line separator
+     * @param payload 순서가 보장된 payload 필드
+     * @param objectMapper Jackson ObjectMapper
+     * @return 개행 문자가 포함된 JSON 한 줄
      */
     private String toJsonLine(Map<String, Object> payload, ObjectMapper objectMapper) {
         try {
@@ -167,3 +167,5 @@ public class BillingNdjsonJobConfiguration {
         }
     }
 }
+
+

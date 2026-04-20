@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Billing detail snapshot joined by billing ID.
+ * 청구 ID로 조인된 billing 상세 스냅샷입니다.
  *
- * @param billingId billing identifier
- * @param amount billed amount
- * @param dueDate due date
+ * @param billingId 청구 식별자
+ * @param amount 청구 금액
+ * @param dueDate 납기일
  */
 public record BillingDetail(
         long billingId,
@@ -16,3 +16,5 @@ public record BillingDetail(
         LocalDate dueDate
 ) {
 }
+
+

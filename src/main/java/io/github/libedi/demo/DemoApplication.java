@@ -4,18 +4,20 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Spring Boot application entry point.
+ * Spring Boot 애플리케이션 시작점입니다.
  */
 @SpringBootApplication
 public class DemoApplication {
 
 	/**
-	 * Starts the Spring Boot application.
+	 * Spring Boot 애플리케이션을 시작합니다.
 	 *
-	 * @param args application arguments
+	 * @param args 애플리케이션 실행 인자
 	 */
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
 }
+
+
