@@ -1,0 +1,4 @@
+app:
+  batch:
+    chunk-size: 1000
+    page-size: 1000
