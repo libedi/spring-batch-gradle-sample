@@ -8,9 +8,13 @@ import io.github.libedi.demo.batch.domain.CustomerInfo;
 import io.github.libedi.demo.batch.mapper.bill.BillDataMapper;
 import io.github.libedi.demo.batch.mapper.bill.BillingMapper;
 import io.github.libedi.demo.batch.mapper.customer.CustomerMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import org.apache.commons.lang3.Strings;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.repository.JobRepository;
@@ -97,7 +101,8 @@ public class BillingNdjsonJobConfiguration {
     @Bean
     public ItemProcessor<Long, BillDataLine> billingLineProcessor(
             BillingMapper billingMapper,
-            CustomerMapper customerMapper
+            CustomerMapper customerMapper,
+            ObjectMapper objectMapper
     ) {
         return billingId -> {
             BillingHeader header = billingMapper.findBillingHeader(billingId);
@@ -112,11 +117,11 @@ public class BillingNdjsonJobConfiguration {
             payload.put("billingId", header.id());
             payload.put("billingNo", header.billingNo());
             payload.put("amount", detail.amount());
-            payload.put("dueDate", detail.dueDate());
+            payload.put("dueDate", Objects.toString(detail.dueDate(), ""));
             payload.put("customerName", customer.customerName());
             payload.put("email", customer.email());
 
-            return new BillDataLine(header.id(), toJsonLine(payload));
+            return new BillDataLine(header.id(), toJsonLine(payload, objectMapper));
         };
     }
 
@@ -147,25 +152,18 @@ public class BillingNdjsonJobConfiguration {
      * Converts ordered payload entries into a single NDJSON line.
      *
      * @param payload ordered payload fields
+     * @param objectMapper jackson object mapper
      * @return one JSON line with trailing line separator
      */
-    private String toJsonLine(Map<String, Object> payload) {
-        StringBuilder json = new StringBuilder("{");
-        boolean first = true;
-        for (Map.Entry<String, Object> entry : payload.entrySet()) {
-            if (!first) {
-                json.append(',');
+    private String toJsonLine(Map<String, Object> payload, ObjectMapper objectMapper) {
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            if (Strings.CS.endsWith(json, "\n")) {
+                return json;
             }
-            json.append('"').append(entry.getKey()).append('"').append(':');
-            Object value = entry.getValue();
-            if (value instanceof Number || value instanceof Boolean) {
-                json.append(value);
-            } else {
-                json.append('"').append(String.valueOf(value)).append('"');
-            }
-            first = false;
+            return json + "\n";
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Failed to serialize bill payload as NDJSON.", exception);
         }
-        json.append("}\n");
-        return json.toString();
     }
 }
