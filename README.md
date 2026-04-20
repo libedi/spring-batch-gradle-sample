@@ -57,9 +57,9 @@ spring-batch-gradle-sample
 ├─ src/main/resources
 │  ├─ application.yml
 │  ├─ config/application.yml
-│  └─ sql
-│     ├─ bill-schema.sql
-│     └─ customer-schema.sql
+│  └─ schema
+│     ├─ bill.sql
+│     └─ customer.sql
 ├─ src/test
 │  ├─ java/io/github/libedi/demo/batch/BillingNdjsonJobIntegrationTest.java
 │  └─ resources
@@ -152,3 +152,4 @@ Windows PowerShell:
 ## 참고
 - 기본 H2 기반 샘플 구성입니다.
 - 실제 운영에서는 DB 연결 정보/스키마/성능 파라미터를 환경별로 분리하세요.
+

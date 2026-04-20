@@ -1,4 +1,4 @@
-app:
+﻿app:
   datasource:
     batch:
       driver-class-name: org.h2.Driver
@@ -6,9 +6,10 @@ app:
       username: sa
     bill:
       driver-class-name: org.h2.Driver
-      jdbc-url: "jdbc:h2:mem:billdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=RUNSCRIPT FROM 'classpath:sql/bill-schema.sql'"
+      jdbc-url: "jdbc:h2:mem:billdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=RUNSCRIPT FROM 'classpath:schema/bill.sql'"
       username: sa
     customer:
       driver-class-name: org.h2.Driver
-      jdbc-url: "jdbc:h2:mem:customerdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=RUNSCRIPT FROM 'classpath:sql/customer-schema.sql'"
+      jdbc-url: "jdbc:h2:mem:customerdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=RUNSCRIPT FROM 'classpath:schema/customer.sql'"
       username: sa
+
