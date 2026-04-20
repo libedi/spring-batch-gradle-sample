@@ -23,9 +23,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+/**
+ * Declares job/step/reader/processor/writer beans for NDJSON billing export.
+ */
 @Configuration
 public class BillingNdjsonJobConfiguration {
 
+    /**
+     * Creates the NDJSON billing job.
+     *
+     * @param jobRepository batch job repository
+     * @param billingNdjsonStep processing step
+     * @return job definition
+     */
     @Bean
     public Job billingNdjsonJob(JobRepository jobRepository, Step billingNdjsonStep) {
         return new JobBuilder("billingNdjsonJob", jobRepository)
@@ -33,6 +43,17 @@ public class BillingNdjsonJobConfiguration {
                 .build();
     }
 
+    /**
+     * Creates the chunk-oriented step for billing NDJSON generation.
+     *
+     * @param jobRepository batch job repository
+     * @param billTransactionManager transaction manager for bill datasource
+     * @param billingIdPagingReader billing ID reader
+     * @param billingLineProcessor item processor that joins bill/customer data
+     * @param billDataWriter item writer that stores NDJSON
+     * @param appBatchProperties batch runtime properties
+     * @return step definition
+     */
     @Bean
     public Step billingNdjsonStep(
             JobRepository jobRepository,
@@ -51,6 +72,13 @@ public class BillingNdjsonJobConfiguration {
                 .build();
     }
 
+    /**
+     * Creates paging reader for target billing IDs.
+     *
+     * @param billingMapper bill mapper
+     * @param appBatchProperties batch runtime properties
+     * @return paging reader
+     */
     @Bean
     public BillingIdPagingReader billingIdPagingReader(
             BillingMapper billingMapper,
@@ -59,6 +87,13 @@ public class BillingNdjsonJobConfiguration {
         return new BillingIdPagingReader(billingMapper, appBatchProperties.pageSize());
     }
 
+    /**
+     * Creates processor that joins bill detail and customer rows into NDJSON line data.
+     *
+     * @param billingMapper bill mapper
+     * @param customerMapper customer mapper
+     * @return item processor
+     */
     @Bean
     public ItemProcessor<Long, BillDataLine> billingLineProcessor(
             BillingMapper billingMapper,
@@ -85,6 +120,13 @@ public class BillingNdjsonJobConfiguration {
         };
     }
 
+    /**
+     * Creates writer that stores NDJSON and marks processed billing rows.
+     *
+     * @param billDataMapper mapper for output table writes
+     * @param billingMapper mapper for processed flag updates
+     * @return item writer
+     */
     @Bean
     public ItemWriter<BillDataLine> billDataWriter(
             BillDataMapper billDataMapper,
@@ -101,6 +143,12 @@ public class BillingNdjsonJobConfiguration {
         };
     }
 
+    /**
+     * Converts ordered payload entries into a single NDJSON line.
+     *
+     * @param payload ordered payload fields
+     * @return one JSON line with trailing line separator
+     */
     private String toJsonLine(Map<String, Object> payload) {
         StringBuilder json = new StringBuilder("{");
         boolean first = true;

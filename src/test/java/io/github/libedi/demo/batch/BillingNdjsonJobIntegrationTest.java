@@ -23,6 +23,9 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlGroup;
 
+/**
+ * Integration tests for step-slice and full job execution paths.
+ */
 @SpringBootTest(properties = "spring.batch.job.enabled=false")
 @ActiveProfiles("test")
 @SqlGroup({
@@ -62,6 +65,11 @@ class BillingNdjsonJobIntegrationTest {
     @Autowired
     private BillDataMapper billDataMapper;
 
+    /**
+     * Verifies step-slice execution processes joinable rows only.
+     *
+     * @throws Exception when job execution fails
+     */
     @Test
     void billingNdjsonStepProcessesJoinableRows() throws Exception {
         JobExecution execution = jobOperator.start(billingNdjsonStepSliceJob, testJobParameters());
@@ -71,6 +79,11 @@ class BillingNdjsonJobIntegrationTest {
         assertThat(billingMapper.countProcessed()).isEqualTo(2);
     }
 
+    /**
+     * Verifies full job execution writes expected NDJSON content.
+     *
+     * @throws Exception when job execution fails
+     */
     @Test
     void billingNdjsonJobCompletesAndWritesNdjson() throws Exception {
         JobExecution execution = jobOperator.start(billingNdjsonJob, testJobParameters());
@@ -84,9 +97,19 @@ class BillingNdjsonJobIntegrationTest {
         assertThat(payload).contains("\"customerName\":\"Alice Kim\"");
     }
 
+    /**
+     * Test-only job configuration for running a single step as a standalone job.
+     */
     @TestConfiguration
     static class StepSliceTestConfiguration {
 
+        /**
+         * Wraps production step into a single-step job for slice testing.
+         *
+         * @param jobRepository job repository
+         * @param billingNdjsonStep production step bean
+         * @return single-step test job
+         */
         @Bean(name = "billingNdjsonStepSliceJob")
         Job billingNdjsonStepSliceJob(
                 JobRepository jobRepository,
@@ -98,6 +121,11 @@ class BillingNdjsonJobIntegrationTest {
         }
     }
 
+    /**
+     * Creates unique parameters for test job execution.
+     *
+     * @return job parameters with unique timestamp
+     */
     private org.springframework.batch.core.job.parameters.JobParameters testJobParameters() {
         return new JobParametersBuilder()
                 .addLong("timestamp", System.currentTimeMillis())
