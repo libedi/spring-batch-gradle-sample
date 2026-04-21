@@ -2,8 +2,10 @@ package io.github.libedi.demo.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.libedi.demo.batch.domain.BillDataLine;
 import io.github.libedi.demo.batch.mapper.bill.BillDataMapper;
 import io.github.libedi.demo.batch.mapper.bill.BillingMapper;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
@@ -95,6 +97,22 @@ class BillingNdjsonJobIntegrationTest {
         String payload = billDataMapper.findPayloadByBillingId(1L);
         assertThat(payload).contains("\"billingNo\":\"BILL-0001\"");
         assertThat(payload).contains("\"customerName\":\"Alice Kim\"");
+    }
+
+    /**
+     * 재시작 상황에서 일부 NDJSON가 이미 저장된 경우에도 잡이 정상 완료되는지 검증합니다.
+     *
+     * @throws Exception Job 실행 실패 시
+     */
+    @Test
+    void billingNdjsonJobCompletesWhenBillDataAlreadyExists() throws Exception {
+        billDataMapper.insertBatch(List.of(new BillDataLine(1L, "{\"billingId\":1}\n")));
+
+        JobExecution execution = jobOperator.start(billingNdjsonJob, testJobParameters());
+
+        assertThat(execution.getExitStatus()).isEqualTo(ExitStatus.COMPLETED);
+        assertThat(billDataMapper.countBillData()).isEqualTo(2);
+        assertThat(billingMapper.countProcessed()).isEqualTo(2);
     }
 
     /**

@@ -1,20 +1,10 @@
 package io.github.libedi.demo.batch.job;
 
 import io.github.libedi.demo.batch.config.AppBatchProperties;
-import io.github.libedi.demo.batch.domain.BillDataLine;
-import io.github.libedi.demo.batch.domain.BillingDetail;
-import io.github.libedi.demo.batch.domain.BillingHeader;
-import io.github.libedi.demo.batch.domain.CustomerInfo;
 import io.github.libedi.demo.batch.mapper.bill.BillDataMapper;
 import io.github.libedi.demo.batch.mapper.bill.BillingMapper;
 import io.github.libedi.demo.batch.mapper.customer.CustomerMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import org.apache.commons.lang3.Strings;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.repository.JobRepository;
@@ -53,8 +43,8 @@ public class BillingNdjsonJobConfiguration {
      * @param jobRepository 배치 Job 저장소
      * @param billTransactionManager bill 데이터소스 트랜잭션 매니저
      * @param billingIdPagingReader 청구 ID 리더
-     * @param billingLineProcessor bill/customer 데이터를 조인하는 ItemProcessor
-     * @param billDataWriter NDJSON를 저장하는 ItemWriter
+     * @param billingLineProcessor 청구 ID를 정규화하는 ItemProcessor
+     * @param billDataWriter 배치 조인 및 NDJSON 저장을 수행하는 ItemWriter
      * @param appBatchProperties 배치 실행 속성
      * @return Step 정의
      */
@@ -63,12 +53,12 @@ public class BillingNdjsonJobConfiguration {
             JobRepository jobRepository,
             @Qualifier("billTransactionManager") PlatformTransactionManager billTransactionManager,
             BillingIdPagingReader billingIdPagingReader,
-            ItemProcessor<Long, BillDataLine> billingLineProcessor,
-            ItemWriter<BillDataLine> billDataWriter,
+            ItemProcessor<Long, Long> billingLineProcessor,
+            ItemWriter<Long> billDataWriter,
             AppBatchProperties appBatchProperties
     ) {
         return new StepBuilder("billingNdjsonStep", jobRepository)
-                .<Long, BillDataLine>chunk(appBatchProperties.chunkSize())
+                .<Long, Long>chunk(appBatchProperties.chunkSize())
                 .transactionManager(billTransactionManager)
                 .reader(billingIdPagingReader)
                 .processor(billingLineProcessor)
@@ -94,35 +84,11 @@ public class BillingNdjsonJobConfiguration {
     /**
      * bill 상세와 customer 행을 조인해 NDJSON 라인 데이터를 만드는 Processor를 생성합니다.
      *
-     * @param billingMapper bill 매퍼
-     * @param customerMapper customer 매퍼
      * @return ItemProcessor
      */
     @Bean
-    public ItemProcessor<Long, BillDataLine> billingLineProcessor(
-            BillingMapper billingMapper,
-            CustomerMapper customerMapper,
-            ObjectMapper objectMapper
-    ) {
-        return billingId -> {
-            BillingHeader header = billingMapper.findBillingHeader(billingId);
-            BillingDetail detail = billingMapper.findBillingDetail(billingId);
-            CustomerInfo customer = customerMapper.findCustomer(billingId);
-
-            if (header == null || detail == null || customer == null) {
-                return null;
-            }
-
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("billingId", header.id());
-            payload.put("billingNo", header.billingNo());
-            payload.put("amount", detail.amount());
-            payload.put("dueDate", Objects.toString(detail.dueDate(), ""));
-            payload.put("customerName", customer.customerName());
-            payload.put("email", customer.email());
-
-            return new BillDataLine(header.id(), toJsonLine(payload, objectMapper));
-        };
+    public ItemProcessor<Long, Long> billingLineProcessor() {
+        return new BillingLineItemProcessor();
     }
 
     /**
@@ -133,38 +99,13 @@ public class BillingNdjsonJobConfiguration {
      * @return ItemWriter
      */
     @Bean
-    public ItemWriter<BillDataLine> billDataWriter(
+    public ItemWriter<Long> billDataWriter(
             BillDataMapper billDataMapper,
-            BillingMapper billingMapper
+            BillingMapper billingMapper,
+            CustomerMapper customerMapper,
+            ObjectMapper objectMapper
     ) {
-        return chunk -> {
-            List<? extends BillDataLine> items = chunk.getItems();
-            if (items.isEmpty()) {
-                return;
-            }
-
-            billDataMapper.insertBatch(List.copyOf(items));
-            billingMapper.markProcessed(items.stream().map(BillDataLine::billingId).toList());
-        };
-    }
-
-    /**
-     * 정렬된 payload 항목을 단일 NDJSON 라인으로 변환합니다.
-     *
-     * @param payload 순서가 보장된 payload 필드
-     * @param objectMapper Jackson ObjectMapper
-     * @return 개행 문자가 포함된 JSON 한 줄
-     */
-    private String toJsonLine(Map<String, Object> payload, ObjectMapper objectMapper) {
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            if (Strings.CS.endsWith(json, "\n")) {
-                return json;
-            }
-            return json + "\n";
-        } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Failed to serialize bill payload as NDJSON.", exception);
-        }
+        return new BillingNdjsonItemWriter(billDataMapper, billingMapper, customerMapper, objectMapper);
     }
 }
 

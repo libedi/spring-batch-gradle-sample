@@ -29,6 +29,24 @@ public interface BillDataMapper {
     int insertBatch(@Param("items") List<BillDataLine> items);
 
     /**
+     * 이미 저장된 청구 ID 목록을 조회합니다.
+     *
+     * @param billingIds 검사할 청구 식별자 목록
+     * @return 이미 존재하는 청구 식별자 목록
+     */
+    @Select("""
+            <script>
+            SELECT billing_id
+            FROM bill_data
+            WHERE billing_id IN
+            <foreach collection='billingIds' item='id' open='(' separator=',' close=')'>
+                #{id}
+            </foreach>
+            </script>
+            """)
+    List<Long> findExistingBillingIds(@Param("billingIds") List<Long> billingIds);
+
+    /**
      * {@code bill_data} 행 수를 조회합니다.
      *
      * @return 행 수

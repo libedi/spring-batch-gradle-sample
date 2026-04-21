@@ -30,30 +30,40 @@ public interface BillingMapper {
     List<Long> findTargetBillingIds(@Param("lastId") long lastId, @Param("pageSize") int pageSize);
 
     /**
-     * 청구 ID로 billing 헤더를 조회합니다.
+     * 청구 ID 목록으로 billing 헤더를 일괄 조회합니다.
      *
-     * @param billingId 청구 식별자
-     * @return billing 헤더 행
+     * @param billingIds 청구 식별자 목록
+     * @return billing 헤더 행 목록
      */
     @Select("""
+            <script>
             SELECT id, billing_no
             FROM billing
-            WHERE id = #{billingId}
+            WHERE id IN
+            <foreach collection='billingIds' item='id' open='(' separator=',' close=')'>
+                #{id}
+            </foreach>
+            </script>
             """)
-    BillingHeader findBillingHeader(@Param("billingId") long billingId);
+    List<BillingHeader> findBillingHeaders(@Param("billingIds") List<Long> billingIds);
 
     /**
-     * 청구 ID로 billing 상세를 조회합니다.
+     * 청구 ID 목록으로 billing 상세를 일괄 조회합니다.
      *
-     * @param billingId 청구 식별자
-     * @return billing 상세 행
+     * @param billingIds 청구 식별자 목록
+     * @return billing 상세 행 목록
      */
     @Select("""
+            <script>
             SELECT billing_id, amount, due_date
             FROM billing_detail
-            WHERE billing_id = #{billingId}
+            WHERE billing_id IN
+            <foreach collection='billingIds' item='id' open='(' separator=',' close=')'>
+                #{id}
+            </foreach>
+            </script>
             """)
-    BillingDetail findBillingDetail(@Param("billingId") long billingId);
+    List<BillingDetail> findBillingDetails(@Param("billingIds") List<Long> billingIds);
 
     /**
      * billing 행을 처리 완료 상태로 변경합니다.

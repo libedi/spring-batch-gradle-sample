@@ -45,6 +45,27 @@
 - 중복 코드는 리팩토링을 통해 공통화
 - 설정 리팩토링 시에도 `application.yml`을 최대한 활용
 
+## Operational Review Notes
+- 운영 기준으로 현재 processor는 N+1 조회 구조로 간주하며, `billing` 1건당 `billing_header`, `billing_detail`, `customer` 재조회 패턴은 지양
+- 대용량(약 1,000만 건) 처리 시 DB round-trip 최소화를 위해 chunk/page 단위 일괄 조회(배치 조회) 전략을 우선 적용
+- 멀티 DB 사용 시 트랜잭션 원자성 한계를 명시하고, 원칙적으로 `한 DB만 쓰기` + `나머지 DB는 읽기 전용` 정책을 유지
+- 향후 읽기 전용 DB에 쓰기 요구가 생기면 현재 구조로는 분산 트랜잭션 원자성 보장이 어렵다는 점을 설계 문서와 코드에 명확히 기록
+- 재시작 안전성은 reader 상태 저장만으로 충분하다고 가정하지 않으며, writer의 insert/update 순서에서 발생 가능한 중간 장애 상태를 반드시 고려
+- `bill_data.billing_id` UNIQUE 제약은 중복 방지 수단으로만 사용하고, 운영 복구 전략으로는 upsert, skip/retry, 상태 전이 컬럼 분리 중 최소 1개 이상 적용
+- 대량 처리 Job은 단일 Step/단일 스레드 전제를 기본값으로 고정하지 않고, partitioning / multi-threaded step / remote chunking 확장 경로를 사전 설계
+- `page-size`, `chunk-size` 기본값(예: 1000)은 시작점으로만 사용하며, 실환경 성능 측정 후 튜닝 결과를 설정으로 외부화
+- 프로젝트가 확장 단계에 진입하면 단일 모듈 구조를 유지하지 않고, 최소 `job`, `domain`, `infra-mybatis`, `boot` 경계로 멀티 모듈 분리를 검토
+- `BillingNdjsonJobConfiguration`에 Reader/Processor/Writer/Step/Job 구성이 과도하게 집중되지 않도록 컴포넌트 분리 원칙을 적용
+- Processor, Writer는 별도 클래스로 분리하고 단위 테스트 가능 구조를 우선하여 변경 용이성과 응집도를 관리
+
 ## Commit Strategy
 - 커밋 메시지는 Angular 방식을 사용하여 메시지 앞에 커밋 성격을 알려주는 prefix를 사용할 것
 - 반드시 테스트를 통과한 코드만 커밋을 수행
+
+## Development Cycle
+- 기능 개발 완료 후(테스트 통과 포함) `커밋 -> 푸쉬`를 완료하면, 즉시 운영 관점 개선/리팩토링 사이클을 시작
+- 운영 관점 개선/리팩토링 대상은 현재 코드와 방금 반영된 기능 전체를 포함
+- 개선/리팩토링 이후 반드시 테스트를 다시 수행하고, 필요 시 테스트 케이스를 추가
+- 재검증이 끝난 결과는 `커밋 -> 푸쉬`까지 완료
+- 위 사이클(기능 개발 완료 -> 커밋/푸쉬 -> 운영 관점 개선/리팩토링 -> 테스트(필요 시 추가) -> 커밋/푸쉬)을 반복 수행
+- 본 문서 기준 작업에서는 사용자의 별도 재확인 없이 테스트 통과 직후 `커밋 -> 푸쉬`를 자동 수행
