@@ -64,7 +64,7 @@ public class BillingNdjsonJobConfiguration {
             AppBatchProperties appBatchProperties
     ) {
         return new StepBuilder("billingNdjsonStep", jobRepository)
-                .<List<Long>, BillingJoinChunk>chunk(1)
+                .<List<Long>, BillingJoinChunk>chunk(appBatchProperties.chunkSize())
                 .transactionManager(billTransactionManager)
                 .reader(billingKeysetChunkReader)
                 .processor(billingJoinChunkProcessor)
