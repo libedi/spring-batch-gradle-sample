@@ -7,11 +7,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @param chunkSize 처리 Step의 청크 크기
  * @param pageSize ID 페이징 리더의 페이지 크기
+ * @param maxId 이번 실행에서 처리할 billing ID 상한
  */
 @ConfigurationProperties(prefix = "app.batch")
 public record AppBatchProperties(
         int chunkSize,
-        int pageSize
+        int pageSize,
+        long maxId
 ) {
 }
 

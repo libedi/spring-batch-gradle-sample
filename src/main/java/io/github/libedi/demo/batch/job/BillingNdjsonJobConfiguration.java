@@ -5,6 +5,7 @@ import io.github.libedi.demo.batch.mapper.bill.BillDataMapper;
 import io.github.libedi.demo.batch.mapper.bill.BillingMapper;
 import io.github.libedi.demo.batch.mapper.customer.CustomerMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.repository.JobRepository;
@@ -42,9 +43,9 @@ public class BillingNdjsonJobConfiguration {
      *
      * @param jobRepository 배치 Job 저장소
      * @param billTransactionManager bill 데이터소스 트랜잭션 매니저
-     * @param billingIdPagingReader 청구 ID 리더
-     * @param billingLineProcessor 청구 ID를 정규화하는 ItemProcessor
-     * @param billDataWriter 배치 조인 및 NDJSON 저장을 수행하는 ItemWriter
+     * @param billingKeysetChunkReader Keyset 청구 ID 페이지 리더
+     * @param billingJoinChunkProcessor 청크 단위 조합 Processor
+     * @param billDataWriter NDJSON 저장/처리상태 갱신 Writer
      * @param appBatchProperties 배치 실행 속성
      * @return Step 정의
      */
@@ -52,43 +53,52 @@ public class BillingNdjsonJobConfiguration {
     public Step billingNdjsonStep(
             JobRepository jobRepository,
             @Qualifier("billTransactionManager") PlatformTransactionManager billTransactionManager,
-            BillingIdPagingReader billingIdPagingReader,
-            ItemProcessor<Long, Long> billingLineProcessor,
-            ItemWriter<Long> billDataWriter,
+            BillingKeysetChunkReader billingKeysetChunkReader,
+            ItemProcessor<List<Long>, BillingJoinChunk> billingJoinChunkProcessor,
+            ItemWriter<BillingJoinChunk> billDataWriter,
             AppBatchProperties appBatchProperties
     ) {
         return new StepBuilder("billingNdjsonStep", jobRepository)
-                .<Long, Long>chunk(appBatchProperties.chunkSize())
+                .<List<Long>, BillingJoinChunk>chunk(1)
                 .transactionManager(billTransactionManager)
-                .reader(billingIdPagingReader)
-                .processor(billingLineProcessor)
+                .reader(billingKeysetChunkReader)
+                .processor(billingJoinChunkProcessor)
                 .writer(billDataWriter)
                 .build();
     }
 
     /**
-     * 대상 청구 ID용 페이징 리더를 생성합니다.
+     * 대상 청구 ID용 Keyset 페이징 리더를 생성합니다.
      *
      * @param billingMapper bill 매퍼
      * @param appBatchProperties 배치 실행 속성
      * @return 페이징 리더
      */
     @Bean
-    public BillingIdPagingReader billingIdPagingReader(
+    public BillingKeysetChunkReader billingKeysetChunkReader(
             BillingMapper billingMapper,
             AppBatchProperties appBatchProperties
     ) {
-        return new BillingIdPagingReader(billingMapper, appBatchProperties.pageSize());
+        return new BillingKeysetChunkReader(
+                billingMapper,
+                appBatchProperties.pageSize(),
+                appBatchProperties.maxId()
+        );
     }
 
     /**
-     * bill 상세와 customer 행을 조인해 NDJSON 라인 데이터를 만드는 Processor를 생성합니다.
+     * 청크 단위로 bill/customer 데이터를 조합하는 Processor를 생성합니다.
      *
      * @return ItemProcessor
      */
     @Bean
-    public ItemProcessor<Long, Long> billingLineProcessor() {
-        return new BillingLineItemProcessor();
+    public ItemProcessor<List<Long>, BillingJoinChunk> billingJoinChunkProcessor(
+            BillingMapper billingMapper,
+            CustomerMapper customerMapper,
+            BillDataMapper billDataMapper,
+            ObjectMapper objectMapper
+    ) {
+        return new BillingJoinChunkProcessor(billingMapper, customerMapper, billDataMapper, objectMapper);
     }
 
     /**
@@ -99,13 +109,11 @@ public class BillingNdjsonJobConfiguration {
      * @return ItemWriter
      */
     @Bean
-    public ItemWriter<Long> billDataWriter(
+    public ItemWriter<BillingJoinChunk> billDataWriter(
             BillDataMapper billDataMapper,
-            BillingMapper billingMapper,
-            CustomerMapper customerMapper,
-            ObjectMapper objectMapper
+            BillingMapper billingMapper
     ) {
-        return new BillingNdjsonItemWriter(billDataMapper, billingMapper, customerMapper, objectMapper);
+        return new BillingNdjsonItemWriter(billDataMapper, billingMapper);
     }
 }
 

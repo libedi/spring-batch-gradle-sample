@@ -30,6 +30,29 @@ public interface BillingMapper {
     List<Long> findTargetBillingIds(@Param("lastId") long lastId, @Param("pageSize") int pageSize);
 
     /**
+     * 마지막 ID 이후, 지정 상한 ID 이하의 미처리 청구 ID 페이지를 조회합니다.
+     *
+     * @param lastId 마지막 처리 청구 ID
+     * @param maxId 이번 실행에서 허용할 최대 청구 ID
+     * @param pageSize 조회할 최대 행 수
+     * @return 대상 청구 ID 목록
+     */
+    @Select("""
+            SELECT id
+            FROM billing
+            WHERE processed = FALSE
+              AND id > #{lastId}
+              AND id <= #{maxId}
+            ORDER BY id
+            LIMIT #{pageSize}
+            """)
+    List<Long> findTargetBillingIdsInRange(
+            @Param("lastId") long lastId,
+            @Param("maxId") long maxId,
+            @Param("pageSize") int pageSize
+    );
+
+    /**
      * 청구 ID 목록으로 billing 헤더를 일괄 조회합니다.
      *
      * @param billingIds 청구 식별자 목록

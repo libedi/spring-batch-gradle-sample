@@ -58,6 +58,25 @@
 - `BillingNdjsonJobConfiguration`에 Reader/Processor/Writer/Step/Job 구성이 과도하게 집중되지 않도록 컴포넌트 분리 원칙을 적용
 - Processor, Writer는 별도 클래스로 분리하고 단위 테스트 가능 구조를 우선하여 변경 용이성과 응집도를 관리
 
+## Large-Scale Batch Architecture Notes
+- 목표 처리량은 최대 2천만 건 규모를 기준으로 설계하고, Kubernetes pod 기반 병렬 처리 및 재시작 안정성을 우선
+- 조회 전략은 Cursor/Offset 기반 대신 Keyset Pagination(`id > :lastId`)을 기본값으로 채택
+- Keyset 조회는 항상 `ORDER BY id ASC` + `LIMIT`를 포함하고, 가능하면 상한 조건(`id <= :maxId`)을 함께 사용
+- 대용량 구간에서 Offset Paging(`OFFSET`)은 성능 저하가 커서 운영 경로에서 사용하지 않음
+- 장시간 커넥션 점유를 유발하는 Cursor Reader는 운영 기본 경로에서 사용하지 않음
+- 병렬 처리는 `Range Partition` 중심으로 설계하고, 파티션 단위 상태 추적을 위한 별도 계획 테이블(`partition_plan`) 도입을 권장
+- `partition_plan`은 실행 키(`job_execution_key`) 기준 append-only로 관리해 재시작/재처리 추적 가능성을 확보
+- Worker는 파티션 범위(`min_id ~ max_id`)를 기준으로 독립 실행하고 `last_processed_id`/`status`를 갱신
+- Reader 책임은 대상 key 조회, Processor 책임은 배치 조합/가공, Writer 책임은 저장/상태 갱신으로 분리
+- Writer는 멱등성을 고려해 중복 방지(UNIQUE, upsert, 선조회 필터링 중 하나 이상)를 반드시 포함
+- 장애 복구는 `ExecutionContext(lastId)`와 파티션 상태 테이블을 함께 사용해 중복/누락 리스크를 줄임
+- 인덱스는 기본적으로 `PRIMARY KEY(id)`를 전제하고, 추가 조건이 있으면 `(status, id)` 복합 인덱스를 검토
+
+## Keyset Reader Rules
+- Keyset Reader는 `lastId`를 `ExecutionContext`에 저장/복원해야 하며 재시작 시 해당 값부터 이어서 처리
+- Keyset Reader는 페이지 단위 조회를 내부적으로 수행하되, Step 처리 단위(아이템/페이지)는 Job 설계 의도에 맞춰 명시적으로 선택
+- Keyset Reader 도입 시 통합 테스트 외에 Reader 단위 테스트(페이지 진행, 재시작, 상태 저장)를 반드시 추가
+
 ## Commit Strategy
 - 커밋 메시지는 Angular 방식을 사용하여 메시지 앞에 커밋 성격을 알려주는 prefix를 사용할 것
 - 반드시 테스트를 통과한 코드만 커밋을 수행

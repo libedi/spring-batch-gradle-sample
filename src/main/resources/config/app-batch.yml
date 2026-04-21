@@ -2,3 +2,4 @@ app:
   batch:
     chunk-size: 1000
     page-size: 1000
+    max-id: 9223372036854775807
