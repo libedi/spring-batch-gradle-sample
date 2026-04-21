@@ -7,7 +7,7 @@
 - 2개 업무 DB(`bill`, `customer`) + 1개 배치 메타 DB(`batch`) 분리
 - `billing` 대상 건 조회 후 상세/고객 정보를 조합
 - 결과를 `bill_data.payload_ndjson`에 NDJSON 포맷으로 저장
-- 대량(약 1,000만 건) 처리를 고려한 Chunk/Page 기반 배치 처리
+- 대량(약 1,000만 건 이상) 처리를 고려한 Keyset 기반 Chunk/Page 배치 처리
 
 ## 기술 스택
 - Java 25
@@ -52,8 +52,15 @@ spring-batch-gradle-sample
 │     │  └─ customer
 │     │     └─ CustomerMapper.java
 │     └─ job
-│        ├─ BillingIdPagingReader.java
+│        ├─ BillingKeysetChunkReader.java
+│        ├─ BillingJoinChunkProcessor.java
+│        ├─ BillingNdjsonItemWriter.java
 │        └─ BillingNdjsonJobConfiguration.java
+│        └─ subtable
+│           ├─ SubTableReader.java
+│           ├─ SubTableRecord.java
+│           ├─ BillingDetailSubTableReader.java
+│           └─ CustomerSubTableReader.java
 ├─ src/main/resources
 │  ├─ application.yml
 │  ├─ config/application.yml
@@ -81,14 +88,15 @@ spring-batch-gradle-sample
 - bill/customer 각각 독립 `SqlSessionFactory`, `SqlSessionTemplate` 구성
 - `@MapperScan`을 패키지 기준으로 분리해 매퍼가 올바른 DB 커넥션을 사용하도록 강제
 
-### 3) 배치 Step 설계 (Chunk + Paging)
-- Reader: `BillingIdPagingReader`
-- `billing`에서 `processed = FALSE` 대상 ID를 페이지 단위 조회
-- Processor: ID 기준으로 `billing_header + billing_detail + customer` 조합
-- 조합 불가 데이터는 `null` 반환으로 필터링
-- Writer: NDJSON 문자열을 `bill_data`에 일괄 insert
-- Writer: 처리 완료된 `billing` ID를 `processed = TRUE`로 일괄 업데이트
-- Step은 `chunk(size).transactionManager(...)` 형태로 구성해 최신 방식 사용
+### 3) 배치 Step 설계 (Keyset Reader + Chunk Processor)
+- Reader: `BillingKeysetChunkReader`
+- Keyset 조건(`id > lastId and id <= maxId`) + `ORDER BY id ASC` + `LIMIT`로 대상 ID 페이지를 조회
+- Reader는 `ExecutionContext`에 `lastId`를 저장/복원해 재시작을 지원
+- Processor: `BillingJoinChunkProcessor`
+- 청크 단위 ID 목록을 받아 `billing_header + billing_detail + customer`를 배치 조회/조합
+- 서브테이블 조회는 `SubTableReader` 구현체(`BillingDetailSubTableReader`, `CustomerSubTableReader`)로 분리
+- Writer: `BillingNdjsonItemWriter`
+- Processor 결과를 저장(`bill_data` insert)하고 처리 완료 상태(`billing.processed = TRUE`)를 갱신
 
 ### 4) NDJSON 생성 규칙
 - 한 레코드당 JSON 라인 1개를 생성하고 줄바꿈(`\n`)으로 종료
@@ -101,11 +109,16 @@ spring-batch-gradle-sample
 - 실행 진입점은 `JobOperator.start(Job, JobParameters)` 사용 (deprecated 방식 제외)
 
 ## 배치 처리 흐름
-1. `billing`에서 미처리 대상 ID 페이지 조회
-2. 각 ID별로 `billing_detail`, `customer`를 조회해 조합
-3. 조합 결과를 NDJSON 문자열로 생성
-4. `bill_data`에 배치 insert
-5. 처리된 `billing` 건 `processed = true`로 업데이트
+1. `billing`에서 Keyset 방식으로 미처리 대상 ID 페이지 조회
+2. Processor가 청크 단위로 `billing_detail`, `customer`를 배치 조회해 조합
+3. 조합 결과를 NDJSON 라인으로 생성
+4. Writer가 `bill_data`에 배치 insert
+5. Writer가 처리된 `billing` 건을 `processed = true`로 업데이트
+
+## 최근 구조 리팩토링 요약
+- 미사용 클래스 제거: `BillingIdPagingReader`, `BillingLineItemProcessor`
+- 기존 offset/단건 조합 관점을 정리하고 Keyset 기반 Reader-Processor-Writer 책임 분리를 강화
+- 서브테이블 조회 확장 지점으로 `SubTableReader` 인터페이스를 도입해 OCP 친화 구조로 개선
 
 ## 설정
 주요 설정 파일:

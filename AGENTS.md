@@ -77,6 +77,13 @@
 - Keyset Reader는 페이지 단위 조회를 내부적으로 수행하되, Step 처리 단위(아이템/페이지)는 Job 설계 의도에 맞춰 명시적으로 선택
 - Keyset Reader 도입 시 통합 테스트 외에 Reader 단위 테스트(페이지 진행, 재시작, 상태 저장)를 반드시 추가
 
+## SubTable Reader Rules
+- 서브테이블 조회 확장은 `SubTableReader<T extends SubTableRecord>` 구현체 추가 방식으로 진행
+- `SubTableReader` 인터페이스는 `List<T> readByBillingIds(List<Long> billingIds)`만 노출하고 동적 key 문자열 계약은 사용하지 않음
+- `Map` 기반 인덱싱은 Processor 내부 최적화 용도로만 허용하고, 인터페이스/도메인 계약으로 노출하지 않음
+- 새로운 서브테이블 추가 시 기존 Processor 시그니처/Writer 책임을 변경하지 않도록 Reader 구현체와 조합 로직만 확장
+- 불필요해진 Reader/Processor/테스트 클래스는 즉시 제거하여 코드 경로를 단일화
+
 ## Commit Strategy
 - 커밋 메시지는 Angular 방식을 사용하여 메시지 앞에 커밋 성격을 알려주는 prefix를 사용할 것
 - 반드시 테스트를 통과한 코드만 커밋을 수행
