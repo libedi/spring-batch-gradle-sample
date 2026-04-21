@@ -1,5 +1,7 @@
 package io.github.libedi.demo.batch.domain;
 
+import io.github.libedi.demo.batch.job.subtable.SubTableRecord;
+
 /**
  * 청구 ID로 조인된 고객 스냅샷입니다.
  *
@@ -11,7 +13,7 @@ public record CustomerInfo(
         long billingId,
         String customerName,
         String email
-) {
+) implements SubTableRecord {
 }
 
 

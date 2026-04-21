@@ -1,6 +1,11 @@
 package io.github.libedi.demo.batch.job;
 
 import io.github.libedi.demo.batch.config.AppBatchProperties;
+import io.github.libedi.demo.batch.domain.BillingDetail;
+import io.github.libedi.demo.batch.domain.CustomerInfo;
+import io.github.libedi.demo.batch.job.subtable.BillingDetailSubTableReader;
+import io.github.libedi.demo.batch.job.subtable.CustomerSubTableReader;
+import io.github.libedi.demo.batch.job.subtable.SubTableReader;
 import io.github.libedi.demo.batch.mapper.bill.BillDataMapper;
 import io.github.libedi.demo.batch.mapper.bill.BillingMapper;
 import io.github.libedi.demo.batch.mapper.customer.CustomerMapper;
@@ -94,11 +99,40 @@ public class BillingNdjsonJobConfiguration {
     @Bean
     public ItemProcessor<List<Long>, BillingJoinChunk> billingJoinChunkProcessor(
             BillingMapper billingMapper,
-            CustomerMapper customerMapper,
+            SubTableReader<BillingDetail> billingDetailSubTableReader,
+            SubTableReader<CustomerInfo> customerSubTableReader,
             BillDataMapper billDataMapper,
             ObjectMapper objectMapper
     ) {
-        return new BillingJoinChunkProcessor(billingMapper, customerMapper, billDataMapper, objectMapper);
+        return new BillingJoinChunkProcessor(
+                billingMapper,
+                billingDetailSubTableReader,
+                customerSubTableReader,
+                billDataMapper,
+                objectMapper
+        );
+    }
+
+    /**
+     * billing_detail 조회용 서브리더를 생성합니다.
+     *
+     * @param billingMapper billing 조회 매퍼
+     * @return SubTableReader 구현체
+     */
+    @Bean
+    public SubTableReader<BillingDetail> billingDetailSubTableReader(BillingMapper billingMapper) {
+        return new BillingDetailSubTableReader(billingMapper);
+    }
+
+    /**
+     * customer 조회용 서브리더를 생성합니다.
+     *
+     * @param customerMapper customer 조회 매퍼
+     * @return SubTableReader 구현체
+     */
+    @Bean
+    public SubTableReader<CustomerInfo> customerSubTableReader(CustomerMapper customerMapper) {
+        return new CustomerSubTableReader(customerMapper);
     }
 
     /**

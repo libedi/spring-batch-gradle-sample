@@ -6,9 +6,9 @@ import io.github.libedi.demo.batch.domain.BillDataLine;
 import io.github.libedi.demo.batch.domain.BillingDetail;
 import io.github.libedi.demo.batch.domain.BillingHeader;
 import io.github.libedi.demo.batch.domain.CustomerInfo;
+import io.github.libedi.demo.batch.job.subtable.SubTableReader;
 import io.github.libedi.demo.batch.mapper.bill.BillDataMapper;
 import io.github.libedi.demo.batch.mapper.bill.BillingMapper;
-import io.github.libedi.demo.batch.mapper.customer.CustomerMapper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,7 +25,8 @@ import org.springframework.batch.infrastructure.item.ItemProcessor;
 public class BillingJoinChunkProcessor implements ItemProcessor<List<Long>, BillingJoinChunk> {
 
     private final BillingMapper billingMapper;
-    private final CustomerMapper customerMapper;
+    private final SubTableReader<BillingDetail> billingDetailSubTableReader;
+    private final SubTableReader<CustomerInfo> customerSubTableReader;
     private final BillDataMapper billDataMapper;
     private final ObjectMapper objectMapper;
 
@@ -33,18 +34,21 @@ public class BillingJoinChunkProcessor implements ItemProcessor<List<Long>, Bill
      * 조합 처리에 필요한 매퍼와 직렬화기를 주입받아 Processor를 생성합니다.
      *
      * @param billingMapper billing 조회/갱신 매퍼
-     * @param customerMapper customer 조회 매퍼
+     * @param billingDetailSubTableReader billing_detail 조회 구현체
+     * @param customerSubTableReader customer 조회 구현체
      * @param billDataMapper bill_data 조회 매퍼
      * @param objectMapper JSON 직렬화기
      */
     public BillingJoinChunkProcessor(
             BillingMapper billingMapper,
-            CustomerMapper customerMapper,
+            SubTableReader<BillingDetail> billingDetailSubTableReader,
+            SubTableReader<CustomerInfo> customerSubTableReader,
             BillDataMapper billDataMapper,
             ObjectMapper objectMapper
     ) {
         this.billingMapper = billingMapper;
-        this.customerMapper = customerMapper;
+        this.billingDetailSubTableReader = billingDetailSubTableReader;
+        this.customerSubTableReader = customerSubTableReader;
         this.billDataMapper = billDataMapper;
         this.objectMapper = objectMapper;
     }
@@ -63,8 +67,8 @@ public class BillingJoinChunkProcessor implements ItemProcessor<List<Long>, Bill
         }
 
         Map<Long, BillingHeader> headersById = toHeaderMap(billingMapper.findBillingHeaders(deduplicatedIds));
-        Map<Long, BillingDetail> detailsById = toDetailMap(billingMapper.findBillingDetails(deduplicatedIds));
-        Map<Long, CustomerInfo> customersById = toCustomerMap(customerMapper.findCustomers(deduplicatedIds));
+        Map<Long, BillingDetail> detailsById = toDetailMap(billingDetailSubTableReader.readByBillingIds(deduplicatedIds));
+        Map<Long, CustomerInfo> customersById = toCustomerMap(customerSubTableReader.readByBillingIds(deduplicatedIds));
 
         List<Long> joinableIds = new ArrayList<>();
         List<BillDataLine> lines = new ArrayList<>();

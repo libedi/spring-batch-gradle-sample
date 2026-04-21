@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.libedi.demo.batch.domain.BillingDetail;
 import io.github.libedi.demo.batch.domain.BillingHeader;
 import io.github.libedi.demo.batch.domain.CustomerInfo;
+import io.github.libedi.demo.batch.job.subtable.SubTableReader;
 import io.github.libedi.demo.batch.mapper.bill.BillDataMapper;
 import io.github.libedi.demo.batch.mapper.bill.BillingMapper;
-import io.github.libedi.demo.batch.mapper.customer.CustomerMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,7 +29,10 @@ class BillingJoinChunkProcessorTest {
     private BillingMapper billingMapper;
 
     @Mock
-    private CustomerMapper customerMapper;
+    private SubTableReader<BillingDetail> billingDetailSubTableReader;
+
+    @Mock
+    private SubTableReader<CustomerInfo> customerSubTableReader;
 
     @Mock
     private BillDataMapper billDataMapper;
@@ -43,7 +46,8 @@ class BillingJoinChunkProcessorTest {
     void setUp() {
         processor = new BillingJoinChunkProcessor(
                 billingMapper,
-                customerMapper,
+                billingDetailSubTableReader,
+                customerSubTableReader,
                 billDataMapper,
                 new ObjectMapper()
         );
@@ -61,11 +65,11 @@ class BillingJoinChunkProcessorTest {
                 new BillingHeader(1L, "BILL-0001"),
                 new BillingHeader(2L, "BILL-0002")
         ));
-        when(billingMapper.findBillingDetails(deduplicatedIds)).thenReturn(List.of(
+        when(billingDetailSubTableReader.readByBillingIds(deduplicatedIds)).thenReturn(List.of(
                 new BillingDetail(1L, BigDecimal.valueOf(12000.50), LocalDate.of(2026, 4, 1)),
                 new BillingDetail(2L, BigDecimal.valueOf(8000.00), LocalDate.of(2026, 4, 2))
         ));
-        when(customerMapper.findCustomers(deduplicatedIds)).thenReturn(List.of(
+        when(customerSubTableReader.readByBillingIds(deduplicatedIds)).thenReturn(List.of(
                 new CustomerInfo(1L, "Alice Kim", "alice@example.com"),
                 new CustomerInfo(2L, "Bob Lee", "bob@example.com")
         ));
@@ -88,8 +92,8 @@ class BillingJoinChunkProcessorTest {
         when(billingMapper.findBillingHeaders(List.of(3L))).thenReturn(List.of(
                 new BillingHeader(3L, "BILL-0003")
         ));
-        when(billingMapper.findBillingDetails(List.of(3L))).thenReturn(List.of());
-        when(customerMapper.findCustomers(List.of(3L))).thenReturn(List.of(
+        when(billingDetailSubTableReader.readByBillingIds(List.of(3L))).thenReturn(List.of());
+        when(customerSubTableReader.readByBillingIds(List.of(3L))).thenReturn(List.of(
                 new CustomerInfo(3L, "Chris Park", "chris@example.com")
         ));
 
